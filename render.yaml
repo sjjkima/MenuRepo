@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: tableorder
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    disk:
+      name: tableorder-disk
+      mountPath: /opt/render/project/src/var
+      sizeGB: 1
+    envVars:
+      - key: TABLEORDER_DATA_DIR
+        value: /opt/render/project/src/var/data
+      - key: TABLEORDER_GENERATED_DIR
+        value: /opt/render/project/src/var/generated

@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Reception — TableOrder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0b0f;
+    --sidebar: #0e1018;
+    --surface: #131520;
+    --surface2: #1a1d2e;
+    --border: #1f2235;
+    --accent: #5b7fff;
+    --accent2: #7c5ce8;
+    --success: #00c875;
+    --warning: #ffb300;
+    --danger: #ff4d6d;
+    --text: #e8eaf6;
+    --muted: #5c6080;
+    --served: #00c875;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 260px;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .logo-sub { font-size: 11px; color: var(--muted); font-weight: 400; }
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .sidebar-section-label {
+    padding: 14px 18px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .sidebar-tables {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 10px 10px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .table-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+    text-align: left;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .table-btn:hover { background: var(--surface); border-color: var(--border); }
+  .table-btn.active { background: var(--surface2); border-color: var(--accent); }
+  .table-btn.has-order { border-color: var(--border); }
+  .table-icon {
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    color: var(--muted);
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+  }
+  .table-btn.has-order .table-icon { background: rgba(91,127,255,0.15); color: var(--accent); }
+  .table-btn.served .table-icon { background: rgba(0,200,117,0.12); color: var(--success); }
+  .table-info { flex: 1; }
+  .table-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .table-status {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .table-btn.has-order .table-status { color: var(--accent); }
+  .table-btn.served .table-status { color: var(--success); }
+  .notif-badge {
+    background: var(--danger);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sidebar-footer {
+    padding: 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+  }
+  .footer-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .footer-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* MAIN */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .top-bar {
+    background: var(--sidebar);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .top-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .top-stats {
+    display: flex;
+    gap: 20px;
+  }
+  .top-stat {
+    text-align: right;
+    font-size: 12px;
+  }
+  .top-stat-val {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+  }
+  .top-stat-label { color: var(--muted); font-size: 11px; }
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--muted);
+    text-align: center;
+    gap: 12px;
+  }
+  .empty-state-icon { font-size: 48px; opacity: 0.4; }
+  .empty-state-title { font-size: 18px; font-family: 'Syne', sans-serif; font-weight: 600; }
+  .empty-state-sub { font-size: 14px; max-width: 280px; line-height: 1.5; }
+
+  /* ORDER PANEL */
+  .order-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .order-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .order-meta { font-size: 13px; color: var(--muted); }
+  .order-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #4a6ee8; }
+  .btn-success { background: rgba(0,200,117,0.15); color: var(--success); border: 1px solid rgba(0,200,117,0.3); }
+  .btn-success:hover { background: rgba(0,200,117,0.25); }
+  .btn-danger { background: rgba(255,77,109,0.1); color: var(--danger); border: 1px solid rgba(255,77,109,0.25); }
+  .btn-danger:hover { background: rgba(255,77,109,0.2); }
+
+  /* STATUS BADGE */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-pending { background: rgba(255,179,0,0.12); color: var(--warning); border: 1px solid rgba(255,179,0,0.25); }
+  .badge-served { background: rgba(0,200,117,0.12); color: var(--success); border: 1px solid rgba(0,200,117,0.25); }
+  .badge-paid { background: rgba(0,200,117,0.12); color: var(--success); border: 1px solid rgba(0,200,117,0.25); }
+  .badge-unpaid { background: rgba(255,77,109,0.12); color: var(--danger); border: 1px solid rgba(255,77,109,0.25); }
+  .badge-mode { background: rgba(91,127,255,0.12); color: var(--accent); border: 1px solid rgba(91,127,255,0.25); }
+
+  /* ITEMS TABLE */
+  .order-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .order-card-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+  }
+  .items-table { width: 100%; border-collapse: collapse; }
+  .items-table th {
+    padding: 10px 18px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .items-table td {
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba(31,34,53,0.5);
+    font-size: 14px;
+  }
+  .items-table tr:last-child td { border-bottom: none; }
+  .item-name { font-weight: 500; color: var(--text); }
+  .item-qty {
+    font-family: 'DM Mono', monospace;
+    color: var(--accent);
+    font-size: 13px;
+  }
+  .item-price {
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    text-align: right;
+  }
+  .total-row td {
+    background: var(--surface2);
+    font-weight: 700;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+  }
+  .total-label { color: var(--muted) !important; font-weight: 600 !important; }
+
+  /* QR SECTION */
+  .qr-section {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .qr-btn {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .qr-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* CONFIRM MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,11,15,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 360px;
+    width: 90%;
+    transform: scale(0.95);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.show .modal { transform: scale(1); }
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .modal-body { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .modal-actions { display: flex; gap: 10px; }
+
+  /* SOUND TOGGLE */
+  .sound-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-switch {
+    width: 30px; height: 16px;
+    background: var(--border);
+    border-radius: 8px;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .toggle-switch.on { background: var(--success); }
+  .toggle-knob {
+    width: 12px; height: 12px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px; left: 2px;
+    transition: left 0.2s;
+  }
+  .toggle-switch.on .toggle-knob { left: 16px; }
+
+  /* ANALYTICS LINK */
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+  .nav-link:hover { background: var(--surface); color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">🍽 TableOrder</div>
+    <div class="logo-sub">Reception Dashboard</div>
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      <span>Live · polling every 3s</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section-label">Tables</div>
+  <div class="sidebar-tables" id="tableList"></div>
+
+  <div class="sidebar-footer">
+    <button class="footer-btn" onclick="window.location.href='analytics.html'">📊 Analytics</button>
+    <div class="sound-toggle" onclick="toggleSound()">
+      <div class="toggle-switch" id="soundSwitch">
+        <div class="toggle-knob"></div>
+      </div>
+      <span>Sound</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="top-bar">
+    <div class="top-title" id="topTitle">Reception</div>
+    <div class="top-stats">
+      <div class="top-stat">
+        <div class="top-stat-val" id="statActive">0</div>
+        <div class="top-stat-label">Active Orders</div>
+      </div>
+      <div class="top-stat">
+        <div class="top-stat-val" id="statRevToday">Rs.0</div>
+        <div class="top-stat-label">Revenue Today</div>
+      </div>
+    </div>
+  </div>
+  <div class="main-content" id="mainContent">
+    <div class="empty-state">
+      <div class="empty-state-icon">🪑</div>
+      <div class="empty-state-title">All tables are free</div>
+      <div class="empty-state-sub">Select a table from the sidebar or wait for orders to come in.</div>
+    </div>
+  </div>
+</main>
+
+
+<script src="config.js"></script>
+<script>
+const API = window.API_BASE || 'http://localhost:8000';
+const TABLES = 20;
+const NEPAL_TIMEZONE = 'Asia/Kathmandu';
+
+// tableOrders[t] = array of orders for that table, newest first
+let tableOrders = {};
+let selectedTable = null;
+let prevOrderIds = new Set();
+let soundEnabled = false;
+
+function parseOrderTimestamp(value) {
+  if (!value) return new Date();
+  return new Date(value.includes('T') ? value : `${value.replace(' ', 'T')}Z`);
+}
+
+function formatNepalDateTime(value) {
+  const ts = parseOrderTimestamp(value);
+  return {
+    date: ts.toLocaleDateString('en-NP', { timeZone: NEPAL_TIMEZONE }),
+    time: ts.toLocaleTimeString('en-NP', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: NEPAL_TIMEZONE,
+    }),
+  };
+}
+
+// ── Sound Alert ──────────────────────────────────────────────────────────────
+function playAlert() {
+  if (!soundEnabled) return;
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.frequency.setValueAtTime(880, ctx.currentTime);
+  osc.frequency.setValueAtTime(660, ctx.currentTime + 0.1);
+  gain.gain.setValueAtTime(0.3, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+  osc.start(); osc.stop(ctx.currentTime + 0.4);
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('soundSwitch').classList.toggle('on', soundEnabled);
+}
+
+// ── Polling ──────────────────────────────────────────────────────────────────
+async function fetchOrders() {
+  try {
+    const res = await fetch(`${API}/orders`);
+    const data = await res.json();
+
+    const activeOrders = data.filter(o => o.status !== 'cleared');
+
+    // Group by table, newest first
+    const grouped = {};
+    activeOrders.forEach(o => {
+      if (!grouped[o.table_number]) grouped[o.table_number] = [];
+      grouped[o.table_number].push(o);
+    });
+    Object.values(grouped).forEach(arr =>
+      arr.sort((a, b) => parseOrderTimestamp(b.created_at) - parseOrderTimestamp(a.created_at))
+    );
+
+    // Sound on new orders
+    const currentIds = new Set(activeOrders.map(o => o.id));
+    let hasNew = false;
+    currentIds.forEach(id => { if (!prevOrderIds.has(id)) hasNew = true; });
+    if (hasNew && prevOrderIds.size > 0) playAlert();
+    prevOrderIds = currentIds;
+
+    tableOrders = grouped;
+    updateStats(activeOrders);
+    renderSidebar();
+    if (selectedTable) renderTableOrders(selectedTable);
+  } catch(e) {
+    console.error('Poll error:', e);
+  }
+}
+
+function updateStats(activeOrders) {
+  const tablesWithOrders = new Set(activeOrders.map(o => o.table_number)).size;
+  document.getElementById('statActive').textContent = tablesWithOrders;
+  const rev = activeOrders.reduce((s, o) => s + o.total_price, 0);
+  document.getElementById('statRevToday').textContent = 'Rs.' + rev.toLocaleString();
+}
+
+// ── Sidebar ──────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  const list = document.getElementById('tableList');
+  list.innerHTML = '';
+  for (let t = 1; t <= TABLES; t++) {
+    const orders = tableOrders[t] || [];
+    const hasPending = orders.some(o => o.status === 'pending');
+    const hasServed  = orders.length > 0 && !hasPending;
+    const totalRs    = orders.reduce((s, o) => s + o.total_price, 0);
+
+    const btn = document.createElement('button');
+    btn.className = 'table-btn'
+      + (orders.length ? ' has-order' : '')
+      + (hasServed ? ' served' : '')
+      + (selectedTable === t ? ' active' : '');
+    btn.onclick = () => selectTable(t);
+
+    let statusText = 'Available';
+    if (orders.length) {
+      statusText = hasPending
+        ? `⏳ ${orders.length} order${orders.length>1?'s':''} · Rs.${totalRs}`
+        : `✓ Served · Rs.${totalRs}`;
+    }
+
+    btn.innerHTML = `
+      <div class="table-icon">T${t}</div>
+      <div class="table-info">
+        <div class="table-label">Table ${t}</div>
+        <div class="table-status">${statusText}</div>
+      </div>
+      ${hasPending ? `<div class="notif-badge">${orders.length}</div>` : ''}`;
+    list.appendChild(btn);
+  }
+}
+
+// ── Order Panel ──────────────────────────────────────────────────────────────
+function selectTable(t) {
+  selectedTable = t;
+  renderSidebar();
+  renderTableOrders(t);
+  document.getElementById('topTitle').textContent = `Table ${t}`;
+}
+
+function renderTableOrders(t) {
+  const orders = tableOrders[t] || [];
+  const content = document.getElementById('mainContent');
+
+  if (orders.length === 0) {
+    content.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🪑</div>
+        <div class="empty-state-title">Table ${t} is free</div>
+        <div class="empty-state-sub">No active orders. Waiting for the customer to scan the QR and order.</div>
+      </div>
+      <div style="margin-top:20px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">QR Code</div>
+        <div class="qr-section">
+          <button class="qr-btn" onclick="downloadQR(${t})">⬇ Download QR for Table ${t}</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Header with Clear All button
+  const totalAll = orders.reduce((s, o) => s + o.total_price, 0);
+  let html = `
+    <div class="order-header">
+      <div>
+        <div class="order-title">Table ${t}</div>
+        <div class="order-meta">${orders.length} order${orders.length>1?'s':''} · Total: Rs. ${totalAll.toLocaleString()}</div>
+      </div>
+      <div class="order-actions">
+        <button class="btn btn-danger" onclick="clearAllOrders(${t})" title="Clear all orders for this table">
+          🗑 Clear All
+        </button>
+        <button class="qr-btn" onclick="downloadQR(${t})" style="font-size:12px">⬇ QR</button>
+      </div>
+    </div>`;
+
+  // Each order card — newest first
+  orders.forEach((order, idx) => {
+    const { date: dateStr, time: timeStr } = formatNepalDateTime(order.created_at);
+    const isPending = order.status === 'pending';
+    const isPaid = order.payment_status === 'paid';
+    const paymentMode = order.mode_of_payment || 'unpaid';
+    const paymentModeLabel = paymentMode === 'online'
+      ? 'Online'
+      : paymentMode === 'cash'
+        ? 'Cash'
+        : 'Unpaid';
+
+    const itemRows = order.items.map(item => {
+      const subtotal = (item.price || 0) * item.qty;
+      return `<tr>
+        <td class="item-name">${item.name}</td>
+        <td class="item-qty">×${item.qty}</td>
+        <td class="item-price">Rs. ${(item.price||0).toLocaleString()}</td>
+        <td class="item-price">Rs. ${subtotal.toLocaleString()}</td>
+      </tr>`;
+    }).join('');
+
+    html += `
+    <div class="order-card" id="order-card-${order.id}">
+      <div class="order-card-header">
+        <span>
+          ${idx === 0 ? '🆕 Latest · ' : ''}Order #${String(order.id).padStart(4,'0')} · ${dateStr} at ${timeStr}
+        </span>
+        <span class="status-badge ${isPending ? 'badge-pending' : 'badge-served'}" style="padding:3px 10px;font-size:11px">
+          ${isPending ? '⏳ Pending' : '✓ Served'}
+        </span>
+        <span class="status-badge ${isPaid ? 'badge-paid' : 'badge-unpaid'}" style="padding:3px 10px;font-size:11px;margin-left:8px">
+          ${isPaid ? 'Paid' : 'Not Paid'}
+        </span>
+        ${isPaid ? `<span class="status-badge badge-mode" style="padding:3px 10px;font-size:11px;margin-left:8px">${paymentModeLabel}</span>` : ''}
+      </div>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Item</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemRows}
+          <tr class="total-row">
+            <td colspan="3" class="total-label">Order Total</td>
+            <td class="item-price">Rs. ${order.total_price.toLocaleString()}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);flex-wrap:wrap">
+        ${isPending ? `<button class="btn btn-success" style="font-size:12px;padding:7px 14px" onclick="markServedById(${order.id}, ${t})">✓ Mark Served</button>` : ''}
+        ${isPaid
+          ? `<button class="btn" style="font-size:12px;padding:7px 14px" onclick="setPaymentMode(${order.id}, 'unpaid')">Mark Unpaid</button>`
+          : `
+        <button class="btn btn-success" style="font-size:12px;padding:7px 14px" onclick="setPaymentMode(${order.id}, 'cash')">Paid Cash</button>
+        <button class="btn" style="font-size:12px;padding:7px 14px" onclick="setPaymentMode(${order.id}, 'online')">Paid Online</button>
+        `}
+      </div>
+    </div>`;
+  });
+
+  content.innerHTML = html;
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+async function markServedById(orderId, t) {
+  // Mark all pending orders for this table as served (by table status endpoint)
+  // We use the order ID to identify, but backend only has table-level status PATCH
+  // So we update by table for now — or we can just re-fetch
+  await fetch(`${API}/order/${t}/status?status=served`, { method: 'PATCH' });
+  fetchOrders();
+}
+
+async function setPaymentMode(orderId, modeOfPayment) {
+  const card = document.getElementById('order-card-' + orderId);
+  if (card) { card.style.opacity = '0.6'; card.style.pointerEvents = 'none'; }
+  try {
+    await fetch(`${API}/order/by-id/${orderId}/payment?mode_of_payment=${modeOfPayment}`, {
+      method: 'PATCH'
+    });
+  } catch(e) {
+    if (card) { card.style.opacity = '1'; card.style.pointerEvents = ''; }
+    alert('Failed to update payment status. Please try again.');
+    return;
+  }
+  fetchOrders();
+}
+
+async function clearAllOrders(t) {
+  const orders = tableOrders[t] || [];
+  if (!orders.length) return;
+  // Clear all orders for this table at once
+  await fetch(`${API}/order/${t}`, { method: 'DELETE' });
+  delete tableOrders[t];
+  fetchOrders();
+}
+
+async function downloadQR(t) {
+  const url = `${API}/generate_qr/${t}?base_url=${encodeURIComponent(window.location.origin)}`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `table_${t}_qr.png`;
+  a.click();
+}
+
+// ── Start ────────────────────────────────────────────────────────────────────
+fetchOrders();
+setInterval(fetchOrders, 3000);
+</script>
+</body>
+</html>
